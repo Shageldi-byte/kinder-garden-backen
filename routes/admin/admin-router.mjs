@@ -8,6 +8,9 @@ import {getSingleChild} from "./child/get-single-child.mjs";
 import {removeChild} from "./child/remove-child.mjs";
 import { addChildRouter } from './child/add-child.mjs';
 import { editChildRouter } from './child/edit-child.mjs';
+import {deleteLog} from "./history/delete-log.mjs";
+import {updateSms} from "./sms/update-sms.mjs";
+import {getSms} from "./sms/get-sms.mjs";
 
 const adminRouter = express.Router();
 
@@ -20,5 +23,8 @@ adminRouter.use('/get-single-child',getSingleChild);
 adminRouter.use('/delete-child',removeChild);
 adminRouter.use('/add-child',addChildRouter);
 adminRouter.use('/edit-child',editChildRouter);
+adminRouter.use('/delete-log',deleteLog);
+adminRouter.use('/update-sms',updateSms);
+adminRouter.use('/get-sms',getSms);
 
 export {adminRouter};

@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         if (file.fieldname === 'image')
             cb(null, folder);
-        else if (file.fieldname === 'docs' || file.fieldname === 'certificate')
+        else if (file.fieldname === 'docs' || file.fieldname === 'certificate' || file.fieldname === 'health_doc')
             cb(null, folder_docs);
 
     },
@@ -44,6 +44,7 @@ const getOldImages = async (req, res, next) => {
                 req.old_image = result.rows[0].child_image;
                 req.doc_certificate = result.rows[0].born_certificate_file;
                 req.doc_file = result.rows[0].doc_file;
+                req.health_doc = result.rows[0].health_doc;
             }
             next();
         })
@@ -53,7 +54,7 @@ const getOldImages = async (req, res, next) => {
 }
 
 const upload = multer({ storage: storage });
-const uploader = upload.fields([{ name: 'image', maxCount: 1 }, { name: 'docs', maxCount: 1 }, { name: 'certificate', maxCount: 1 }]);
+const uploader = upload.fields([{ name: 'image', maxCount: 1 }, { name: 'docs', maxCount: 1 }, { name: 'certificate', maxCount: 1 },{name:'health_doc',maxCount: 1}]);
 editChildRouter.post('/', verifyToken, checkFolder, uploader, getOldImages, (req, res) => {
     if (typeof req.body === 'undefined' || req.body == null) {
         badRequest(req, res);
@@ -63,6 +64,7 @@ editChildRouter.post('/', verifyToken, checkFolder, uploader, getOldImages, (req
         let image = req.old_image;
         let docs = req.doc_file;
         let certificate = req.doc_certificate;
+        let health_doc = req.health_doc;
 
         if (typeof req.files.image !== "undefined" && req.files.image != null && req.files.image != '') {
             image = req.files.image[0].filename;
@@ -74,6 +76,10 @@ editChildRouter.post('/', verifyToken, checkFolder, uploader, getOldImages, (req
 
         if (typeof req.files.certificate !== "undefined" && req.files.certificate != null && req.files.certificate != '') {
             certificate = req.files.certificate[0].destination + "/" + req.files.certificate[0].filename;
+        }
+
+        if (typeof req.files.health_doc !== "undefined" && req.files.health_doc != null && req.files.health_doc != '') {
+            health_doc = req.files.health_doc[0].destination + "/" + req.files.health_doc[0].filename;
         }
 
 
@@ -105,8 +111,8 @@ editChildRouter.post('/', verifyToken, checkFolder, uploader, getOldImages, (req
             name,
             surname,
             middlename,
-            0,
             group_id,
+            0,
             faa,
             father_phone_number,
             father_work_address,
@@ -119,7 +125,7 @@ editChildRouter.post('/', verifyToken, checkFolder, uploader, getOldImages, (req
             enter_date, exit_date,
             fullinformation,
             certificate, docs,
-            gender, address, dob, id
+            gender, address, dob, health_doc, id
         ]).then(result => {
             if (result.rows.length) {
                 res.json(response(false, 'success', result.rows[0]));

@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         if (file.fieldname === 'image')
             cb(null, folder);
-        else if (file.fieldname === 'docs' || file.fieldname === 'certificate')
+        else if (file.fieldname === 'docs' || file.fieldname === 'certificate' || file.fieldname === 'health_doc')
             cb(null,folder_docs);
         
     },
@@ -37,7 +37,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
-const uploader = upload.fields([{ name:'image',maxCount:1},{ name:'docs',maxCount:1},{ name:'certificate',maxCount:1}]);
+const uploader = upload.fields([{ name:'image',maxCount:1},{ name:'docs',maxCount:1},{ name:'certificate',maxCount:1},{name:'health_doc',maxCount: 1}]);
 addChildRouter.post('/',verifyToken, checkFolder,uploader,(req,res) => {
     if(typeof req.body === 'undefined' || req.body == null){
         badRequest(req,res);
@@ -45,7 +45,8 @@ addChildRouter.post('/',verifyToken, checkFolder,uploader,(req,res) => {
         const image = req.files.image[0].filename;
         const docs = req.files.docs[0].destination + "/" + req.files.docs[0].filename;
         const certificate = req.files.certificate[0].destination + "/" + req.files.certificate[0].filename;
-       
+        const health_doc = req.files.health_doc[0].destination + "/" + req.files.health_doc[0].filename;
+
         const {
             name,
             surname,
@@ -88,7 +89,7 @@ addChildRouter.post('/',verifyToken, checkFolder,uploader,(req,res) => {
             fullinformation, 
             certificate, docs, 
             gender, address, 
-            qr_code, dob
+            qr_code, dob,health_doc
         ]).then(result=>{
             if(result.rows.length){
                 res.json(response(false,'success',result.rows[0]));

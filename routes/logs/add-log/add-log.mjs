@@ -1,8 +1,8 @@
 import express from 'express';
-import { LATE_DURATION, LOGTYPE, START_TIME,END_TIME } from '../../../modules/constant/constant.mjs';
+import {LATE_DURATION, LOGTYPE, START_TIME, END_TIME, GENDER} from '../../../modules/constant/constant.mjs';
 import { badRequest,response } from '../../../modules/response.mjs';
 import { db } from '../../../modules/sql/connection.mjs';
-import { addLogQuery } from '../../../modules/sql/query.mjs';
+import {addLogQuery, getSingleChildAndSmsQuery} from '../../../modules/sql/query.mjs';
 import serialportgsm from 'serialport-gsm';
 
 const addLog = express.Router();
@@ -32,13 +32,13 @@ let options = {
     logger: console
 }
 
-modem.open('COM22', options, {});
-
-modem.on('open', data => {
-    modem.initializeModem((data)=>{
-        console.log("modem is initialized");
-    })
-})
+// modem.open('COM22', options, {});
+//
+// modem.on('open', data => {
+//     modem.initializeModem((data)=>{
+//         console.log("modem is initialized");
+//     })
+// })
 
 addLog.post('/',(req,res)=>{
    
@@ -87,10 +87,24 @@ addLog.post('/',(req,res)=>{
         is_delivery_sms
     ]).then(async result=>{
         if(result.rows.length){
-            await modem.sendSMS('+99363430338','Fuck you',true,(data)=>{
-                console.log(data);
-            });
+            await db.query(getSingleChildAndSmsQuery,[child_id])
+                .then(async result=>{
+                    let parentName=result.rows[0].phone_number_gender==GENDER.MAN?result.rows[0].father_fullname:result.rows[0].mother_fullname;
+                    let m1=result.rows[0].sms.replace('_parent_name',parentName);
+                    let m2=m1.replace('_child_name',result.rows[0].name);
+                    let m3=m2.replace('_date',date_log);
+                    let m4=m3.replace('_time',time_log);
+                    let phoneNumber=result.rows[0].phone_number_gender==GENDER.MAN?result.rows[0].father_phone_number:result.rows[0].mother_phone_number;
+                    console.log(`${m4}  / ${phoneNumber}`);
+                    // await modem.sendSMS(phoneNumber,m4,true,(data)=>{
+                    //     console.log(data);
+                    // });
+                })
+                .catch(err=>{
+                    console.log(err);
+                })
             res.json(response(false,'success',result.rows[0]));
+            res.end();
         } else {
             badRequest(req,res);
         }
@@ -101,8 +115,8 @@ addLog.post('/',(req,res)=>{
     })
 });
 
-modem.on('onSendingMessage', result => {
-    console.log(result);
-});
+// modem.on('onSendingMessage', result => {
+//     console.log(result);
+// });
 
 export {addLog};

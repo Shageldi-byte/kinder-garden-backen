@@ -132,7 +132,7 @@ export const getSingleChildQuery=`
     c.father_job_address, c.mother_fullname, c.mother_phone_number, c.mother_job_address, 
     c.phone_number_gender, c.child_image, c.child_caregiver, c.caregiver_phone_number, 
     c.kinder_garden_entered_date, c.kinder_garden_exited_date, c.full_information, 
-    c.born_certificate_file, c.doc_file, c.gender, c.address, c.created_at, c.updated_at, c.qr_code,c.dob,g.group_name,g.group_number,g.group_room
+    c.born_certificate_file, c.doc_file, c.gender, c.address,c.health_doc, c.created_at, c.updated_at, c.qr_code,c.dob,g.group_name,g.group_number,g.group_room
     FROM child c 
     LEFT JOIN group_kinder_garden g ON g.id=c.group_id
     WHERE c.id=$1
@@ -152,8 +152,8 @@ export const removeChildLog=`
 
 export const addChildQuery = `
 INSERT INTO public.child(
-	name, surname, middle_name, group_id, age, father_fullname, father_phone_number, father_job_address, mother_fullname, mother_phone_number, mother_job_address, phone_number_gender, child_image, child_caregiver, caregiver_phone_number, kinder_garden_entered_date, kinder_garden_exited_date, full_information, born_certificate_file, doc_file, gender, address, created_at, updated_at, qr_code, dob)
-	VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8, $9, $10, $11,$12, $13,$14, $15, $16, $17, $18, $19, $20, $21,now(), now(), $22, $23) RETURNING *;
+	name, surname, middle_name, group_id, age, father_fullname, father_phone_number, father_job_address, mother_fullname, mother_phone_number, mother_job_address, phone_number_gender, child_image, child_caregiver, caregiver_phone_number, kinder_garden_entered_date, kinder_garden_exited_date, full_information, born_certificate_file, doc_file, gender, address, created_at, updated_at, qr_code, dob,health_doc)
+	VALUES ($1, $2, $3, $4, 0, $5, $6, $7, $8, $9, $10, $11,$12, $13,$14, $15, $16, $17, $18, $19, $20, $21,now(), now(), $22, $23,$24) RETURNING *;
 `;
 
 export const updateChildQuery=`
@@ -163,6 +163,33 @@ export const updateChildQuery=`
     mother_job_address=$11, phone_number_gender=$12, child_image=$13, 
     child_caregiver=$14, caregiver_phone_number=$15, kinder_garden_entered_date=$16, 
     kinder_garden_exited_date=$17, full_information=$18, born_certificate_file=$19, doc_file=$20, 
-    gender=$21, address=$22, updated_at=now(), dob=$23
-	WHERE id=$24 RETURNING *;
+    gender=$21, address=$22, updated_at=now(), dob=$23,health_doc=$24
+	WHERE id=$25 RETURNING *;
+`;
+
+export const deleteLogQuery=`
+    DELETE FROM entire_log WHERE id=$1;
+`;
+
+export const updateSmsQuery=`
+    UPDATE public.sms_template SET sms=$1, updated_at='now()' RETURNING *;
+`;
+
+export const getSmsQuery=`
+    SELECT id, sms, created_at, updated_at
+    FROM public.sms_template ORDER BY updated_at DESC LIMIT 1;
+`;
+
+export const getSingleChildAndSmsQuery=`
+    SELECT c.id, c.name, c.surname, c.middle_name, 
+    c.group_id, c.age, c.father_fullname, c.father_phone_number, 
+    c.father_job_address, c.mother_fullname, c.mother_phone_number, c.mother_job_address, 
+    c.phone_number_gender, c.child_image, c.child_caregiver, c.caregiver_phone_number, 
+    c.kinder_garden_entered_date, c.kinder_garden_exited_date, c.full_information, 
+    c.born_certificate_file, c.doc_file, c.gender, c.address,c.health_doc, c.created_at, c.updated_at, c.qr_code,c.dob,g.group_name,g.group_number,g.group_room,
+    (SELECT s.sms FROM sms_template s ORDER BY s.updated_at DESC LIMIT 1) as sms
+    FROM child c 
+    LEFT JOIN group_kinder_garden g ON g.id=c.group_id
+    WHERE c.id=$1
+    ORDER BY c.created_at DESC;
 `;
