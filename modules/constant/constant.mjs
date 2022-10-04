@@ -23,3 +23,10 @@ export const LATE_DURATION = 30;
 
 export const QR_CODE_LENGHT = 20;
 
+
+export const smsStatus={
+    SMS_QUEUED:'Successfully Sent to Message Queue',
+    SMS_SENDING:'Message Currently Sending',
+    SMS_SENT:'Message Successfully Sent'
+}
+

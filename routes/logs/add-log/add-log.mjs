@@ -1,8 +1,8 @@
 import express from 'express';
-import {LATE_DURATION, LOGTYPE, START_TIME, END_TIME, GENDER} from '../../../modules/constant/constant.mjs';
+import {LATE_DURATION, LOGTYPE, START_TIME, END_TIME, GENDER, smsStatus} from '../../../modules/constant/constant.mjs';
 import { badRequest,response } from '../../../modules/response.mjs';
 import { db } from '../../../modules/sql/connection.mjs';
-import {addLogQuery, getSingleChildAndSmsQuery} from '../../../modules/sql/query.mjs';
+import {addLogQuery, getSingleChildAndSmsQuery, updateSmsDeliveryByPhoneNumber} from '../../../modules/sql/query.mjs';
 import serialportgsm from 'serialport-gsm';
 
 const addLog = express.Router();
@@ -33,12 +33,20 @@ let options = {
 }
 
 // modem.open('COM22', options, {});
-//
+
 // modem.on('open', data => {
 //     modem.initializeModem((data)=>{
 //         console.log("modem is initialized");
 //     })
 // })
+
+const checkSms=(data)=>{
+    if(data.data.response==smsStatus.SMS_SENT){
+        db.query(updateSmsDeliveryByPhoneNumber,[data.data.recipient])
+        .then(result=>{console.log('Sms sent')})
+        .catch(err=>{console.log(err)});
+    }
+}
 
 addLog.post('/',(req,res)=>{
    
@@ -87,7 +95,7 @@ addLog.post('/',(req,res)=>{
         is_delivery_sms
     ]).then(async result=>{
         if(result.rows.length){
-            await db.query(getSingleChildAndSmsQuery,[child_id])
+            await db.query(getSingleChildAndSmsQuery,[type,child_id])
                 .then(async result=>{
                     let parentName=result.rows[0].phone_number_gender==GENDER.MAN?result.rows[0].father_fullname:result.rows[0].mother_fullname;
                     let m1=result.rows[0].sms.replace('_parent_name',parentName);
@@ -97,7 +105,9 @@ addLog.post('/',(req,res)=>{
                     let phoneNumber=result.rows[0].phone_number_gender==GENDER.MAN?result.rows[0].father_phone_number:result.rows[0].mother_phone_number;
                     console.log(`${m4}  / ${phoneNumber}`);
                     // await modem.sendSMS(phoneNumber,m4,true,(data)=>{
+                    //     data.data.recipient=phoneNumber;
                     //     console.log(data);
+                    //     checkSms(data);
                     // });
                 })
                 .catch(err=>{
@@ -117,6 +127,7 @@ addLog.post('/',(req,res)=>{
 
 // modem.on('onSendingMessage', result => {
 //     console.log(result);
+//     checkSms(data);
 // });
 
 export {addLog};

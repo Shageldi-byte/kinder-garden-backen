@@ -1,3 +1,5 @@
+import { LOGTYPE } from "../constant/constant.mjs";
+
 export const getChildByQrCodeQuery = `
 SELECT c.id, c.name, c.surname, c.middle_name, c.group_id, 
 c.age, c.father_fullname, c.father_phone_number, 
@@ -172,12 +174,12 @@ export const deleteLogQuery=`
 `;
 
 export const updateSmsQuery=`
-    UPDATE public.sms_template SET sms=$1, updated_at='now()' RETURNING *;
+    UPDATE public.sms_template SET sms=$1, updated_at='now()' WHERE type=$2 RETURNING *;
 `;
 
 export const getSmsQuery=`
-    SELECT id, sms, created_at, updated_at
-    FROM public.sms_template ORDER BY updated_at DESC LIMIT 1;
+    SELECT id, sms, created_at, updated_at,type
+    FROM public.sms_template ORDER BY updated_at DESC;
 `;
 
 export const getSingleChildAndSmsQuery=`
@@ -187,9 +189,29 @@ export const getSingleChildAndSmsQuery=`
     c.phone_number_gender, c.child_image, c.child_caregiver, c.caregiver_phone_number, 
     c.kinder_garden_entered_date, c.kinder_garden_exited_date, c.full_information, 
     c.born_certificate_file, c.doc_file, c.gender, c.address,c.health_doc, c.created_at, c.updated_at, c.qr_code,c.dob,g.group_name,g.group_number,g.group_room,
-    (SELECT s.sms FROM sms_template s ORDER BY s.updated_at DESC LIMIT 1) as sms
+    (SELECT s.sms FROM sms_template s WHERE s.type=$1 ORDER BY s.updated_at DESC LIMIT 1) as sms
     FROM child c 
     LEFT JOIN group_kinder_garden g ON g.id=c.group_id
-    WHERE c.id=$1
+    WHERE c.id=$2
     ORDER BY c.created_at DESC;
+`;
+
+
+export const updateSmsDeliveryByPhoneNumber=`
+UPDATE entire_log e
+	SET is_delivery_sms=true, updated_at=now()
+	WHERE 
+	(SELECT CASE
+		WHEN phone_number_gender = '1' THEN father_phone_number
+		WHEN phone_number_gender = '2' THEN mother_phone_number
+	   END phone_number
+	FROM child WHERE id=e.child_id  LIMIT 1) = $1 AND e.id = (
+		SELECT id FROM entire_log WHERE 
+		(SELECT CASE
+					WHEN phone_number_gender = '1' THEN father_phone_number
+					WHEN phone_number_gender = '2' THEN mother_phone_number
+	   			END phone_number
+			FROM child  WHERE id=e.child_id LIMIT 1) = $1
+		ORDER BY created_at DESC LIMIT 1
+	);
 `;

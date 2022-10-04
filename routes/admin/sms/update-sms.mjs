@@ -11,9 +11,9 @@ updateSms.put('/',verifyToken,(req,res)=>{
         badRequest(req,res);
     } else {
         const {
-            sms
+            sms,type
         } =req.body;
-        db.query(updateSmsQuery,[sms])
+        db.query(updateSmsQuery,[sms,type])
             .then(result=>{
                 if(result.rows.length){
                     res.json(response(false,'success',result.rows[0]));

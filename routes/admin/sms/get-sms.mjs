@@ -9,7 +9,7 @@ const getSms=express.Router();
 getSms.get('/',verifyToken,(req,res)=>{
     db.query(getSmsQuery)
         .then(result=>{
-            res.json(response(false,'success',result.rows[0]));
+            res.json(response(false,'success',result.rows));
             res.end();
         })
         .catch(err=>{
